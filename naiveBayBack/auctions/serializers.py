@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.utils import timezone
 from .models import Category, Auction
 from drf_spectacular.utils import extend_schema_field
+from datetime import timedelta
 
 
 class CategoryListCreateSerializer(serializers.ModelSerializer):
@@ -31,6 +32,14 @@ class AuctionListCreateSerializer(serializers.ModelSerializer):
     def get_isOpen(self, obj):
         return obj.closing_date > timezone.now()
 
+    def validate_closing_date(self, value):
+        # TODO: make it so the closing 15 days after creation works
+        if value <= timezone.now() + timedelta(days=15):
+            raise serializers.ValidationError(
+                "Closing date must be at least 15 days from now"
+            )
+        return value
+
 
 class AuctionDetailSerializer(serializers.ModelSerializer):
     creation_date = serializers.DateTimeField(
@@ -46,3 +55,10 @@ class AuctionDetailSerializer(serializers.ModelSerializer):
     @extend_schema_field(serializers.BooleanField())
     def get_isOpen(self, obj):
         return obj.closing_date > timezone.now()
+
+    def validate_closing_date(self, value):
+        if value <= timezone.now() + timedelta(days=15):
+            raise serializers.ValidationError(
+                "Closing date must be at least 15 days from now"
+            )
+        return value
