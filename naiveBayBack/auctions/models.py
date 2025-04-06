@@ -33,3 +33,18 @@ class Auction(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Bid(models.Model):
+    bid_value = models.DecimalField(
+        max_digits=10, decimal_places=2, validators=[MinValueValidator(0)]
+    )
+    auction = models.ForeignKey(Auction, related_name="bids", on_delete=models.CASCADE)
+    user = models.CharField(max_length=150)
+    # TODO: add a creation time field?
+
+    class Meta:
+        ordering = ("id",)
+
+    def __str__(self):
+        return self.bid_value
