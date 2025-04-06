@@ -41,10 +41,10 @@ class Bid(models.Model):
     )
     auction = models.ForeignKey(Auction, related_name="bids", on_delete=models.CASCADE)
     user = models.CharField(max_length=150)
-    # TODO: add a creation time field?
+    creation_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ("id",)
+        ordering = ("-bid_value",)
 
     def __str__(self):
-        return self.bid_value
+        return str(self.bid_value)

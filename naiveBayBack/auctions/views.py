@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework import generics, status
-from .models import Category, Auction
+from .models import Category, Auction, Bid
 from django.db.models import Q
 from rest_framework.exceptions import ValidationError
 from .serializers import (
@@ -8,6 +8,8 @@ from .serializers import (
     CategoryDetailSerializer,
     AuctionListCreateSerializer,
     AuctionDetailSerializer,
+    BidListCreateSerializer,
+    BidDetailSerializer,
 )
 
 
@@ -73,3 +75,13 @@ class AuctionListCreate(generics.ListCreateAPIView):
 class AuctionRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Auction.objects.all()
     serializer_class = AuctionDetailSerializer
+
+
+class BidListCreate(generics.ListCreateAPIView):
+    queryset = Bid.objects.all()
+    serializer_class = BidListCreateSerializer
+
+
+class AuctionRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Bid.objects.all()
+    serializer_class = BidDetailSerializer
