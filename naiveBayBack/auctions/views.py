@@ -1,6 +1,8 @@
 from django.shortcuts import render
-from rest_framework import generics
+from rest_framework import generics, status
 from .models import Category, Auction
+from django.db.models import Q
+from rest_framework.exceptions import ValidationError
 from .serializers import (
     CategoryListCreateSerializer,
     CategoryDetailSerializer,
@@ -25,20 +27,42 @@ class AuctionListCreate(generics.ListCreateAPIView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        params = self.request.query_params
 
-        text = self.request.query_params.get("text")
-        category = self.request.query_params.get("category")
-        min_price = self.request.query_params.get("min_price")
-        max_price = self.request.query_params.get("max_price")
+        search = params.get("search")
+        category = params.get("category")
+        min_price = params.get("min_price")
+        max_price = params.get("max_price")
 
-        if text:
+        if search and len(search) < 3:
+            raise ValidationError(
+                {"search": "Search query must be at least 3 characters long."},
+                code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if search:
             # Fix so description is considered too
-            queryset = queryset.filter(title__icontains=text)
+            queryset = queryset.filter(
+                Q(title__icontains=search) | Q(description__icontains=search)
+            )
 
         if category:
-            # TODO: check if thisis correct (name vs id)
-            queryset = queryset.filter(category__id=category)
+            # TODO: see how I can make it so the category exists in the db
+            queryset = queryset.filter(category__name__icontains=category)
 
+        if min_price and max_price:
+            if float(min_price) > float(max_price):
+                raise ValidationError(
+                    {
+                        "min_price": "Minimum price cannot be greater than maximum price."
+                    },
+                    code=status.HTTP_400_BAD_REQUEST,
+                )
+            if float(min_price) < 0 or float(max_price) < 0:
+                raise ValidationError(
+                    {"price": "Price cannot be negative."},
+                    code=status.HTTP_400_BAD_REQUEST,
+                )
         if min_price:
             queryset = queryset.filter(price__gte=min_price)
         if max_price:
