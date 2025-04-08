@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator
+from users.models import CustomUser
 
 
 class Category(models.Model):
@@ -27,6 +28,9 @@ class Auction(models.Model):
     thumbnail = models.URLField()
     creation_date = models.DateTimeField(auto_now_add=True)
     closing_date = models.DateTimeField()
+    auctioneer = models.ForeignKey(
+        CustomUser, related_name="auctions", on_delete=models.CASCADE
+    )
 
     class Meta:
         ordering = ("id",)
@@ -36,15 +40,15 @@ class Auction(models.Model):
 
 
 class Bid(models.Model):
-    bid_value = models.DecimalField(
+    price = models.DecimalField(
         max_digits=10, decimal_places=2, validators=[MinValueValidator(0)]
     )
     auction = models.ForeignKey(Auction, related_name="bids", on_delete=models.CASCADE)
-    user = models.CharField(max_length=150)
+    bidder = models.CharField(max_length=150)
     creation_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ("-bid_value",)
+        ordering = ("-price",)
 
     def __str__(self):
-        return str(self.bid_value)
+        return str(self.price)

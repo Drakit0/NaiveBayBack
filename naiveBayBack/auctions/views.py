@@ -1,4 +1,5 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
+from django.utils import timezone
 from rest_framework import generics, status
 from .models import Category, Auction, Bid
 from django.db.models import Q
@@ -11,6 +12,10 @@ from .serializers import (
     BidListCreateSerializer,
     BidDetailSerializer,
 )
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
+from rest_framework.response import Response
+from .permissions import IsOwnerOrAdmin
 
 
 class CategoryListCreate(generics.ListCreateAPIView):
@@ -75,13 +80,56 @@ class AuctionListCreate(generics.ListCreateAPIView):
 class AuctionRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Auction.objects.all()
     serializer_class = AuctionDetailSerializer
+    permission_classes = [IsOwnerOrAdmin]
 
 
 class BidListCreate(generics.ListCreateAPIView):
+    # TODO: see how to add user
     queryset = Bid.objects.all()
     serializer_class = BidListCreateSerializer
+    permission_classes = [IsOwnerOrAdmin]
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .filter(get_object_or_404(Auction, id=self.kwargs["pk"]))
+        )
+
+    def perform_create(self, serializer):
+        auction_id = self.kwargs["pk"]
+        auction = get_object_or_404(Auction, id=auction_id)
+        price = self.request.data.get("price")
+        if auction.closing_date <= timezone.now():
+            raise ValidationError({"price": "Cannot bid on closed auctions"})
+
+        # Check if bid is highest
+        highest_bid = Bid.objects.filter(auction=auction).first()
+
+        if highest_bid and price <= highest_bid.price:
+            raise ValidationError(
+                {"price": f"Must exceed current highest bid ({highest_bid.price})"}
+            )
+
+        if not highest_bid and price < auction.price:
+            raise ValidationError(
+                {"price": f"Must meet starting price of {auction.price}"}
+            )
+
+        # serializer.save(auction_id=auction_id, bidder=self.request.user)
+        serializer.save(auction_id=auction_id)
 
 
 class BidRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Bid.objects.all()
     serializer_class = BidDetailSerializer
+
+
+class UserAuctionListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        # Obtener las subastas del usuario autenticado
+        user_auctions = Auction.objects.filter(auctioneer=request.user)
+        serializer = AuctionListCreateSerializer(user_auctions, many=True)
+        return Response(serializer.data)

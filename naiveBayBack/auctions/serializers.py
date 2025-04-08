@@ -65,41 +65,14 @@ class AuctionDetailSerializer(serializers.ModelSerializer):
 
 
 class BidListCreateSerializer(serializers.ModelSerializer):
-    # TODO: see what fields we should include for bids
-    creation_date = serializers.DateTimeField(
-        format="%Y-%m-%dT%H:%M:%SZ", read_only=True
-    )
 
     class Meta:
         model = Bid
-        fields = "__all__"
-
-    def validate(self, attrs):
-        bid_value = attrs["bid_value"]
-        auction = attrs["auction"]
-
-        # Check if auction is open
-        if auction.closing_date <= timezone.now():
-            raise serializers.ValidationError(
-                {"bid_value": "Cannot bid on closed auctions"}
-            )
-
-        # Check if bid is highest
-        highest_bid = Bid.objects.filter(auction=auction).first()
-
-        if highest_bid and bid_value <= highest_bid.bid_value:
-            raise serializers.ValidationError(
-                {
-                    "bid_value": f"Must exceed current highest bid ({highest_bid.bid_value})"
-                }
-            )
-
-        if not highest_bid and bid_value < auction.price:
-            raise serializers.ValidationError(
-                {"bid_value": f"Must meet starting price of {auction.price}"}
-            )
-
-        return attrs
+        fields = (
+            "price",
+            "bidder",
+            # "auction",
+        )
 
 
 class BidDetailSerializer(serializers.ModelSerializer):
@@ -112,28 +85,26 @@ class BidDetailSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def validate(self, attrs):
-        bid_value = attrs["bid_value"]
+        price = attrs["price"]
         auction = attrs["auction"]
 
         # Check if auction is open
         if auction.closing_date <= timezone.now():
             raise serializers.ValidationError(
-                {"bid_value": "Cannot bid on closed auctions"}
+                {"price": "Cannot bid on closed auctions"}
             )
 
         # Check if bid is highest
         highest_bid = Bid.objects.filter(auction=auction).first()
 
-        if highest_bid and bid_value <= highest_bid.bid_value:
+        if highest_bid and price <= highest_bid.price:
             raise serializers.ValidationError(
-                {
-                    "bid_value": f"Must exceed current highest bid ({highest_bid.bid_value})"
-                }
+                {"price": f"Must exceed current highest bid ({highest_bid.price})"}
             )
 
-        if not highest_bid and bid_value < auction.price:
+        if not highest_bid and price < auction.price:
             raise serializers.ValidationError(
-                {"bid_value": f"Must meet starting price of {auction.price}"}
+                {"price": f"Must meet starting price of {auction.price}"}
             )
 
         return attrs
