@@ -84,27 +84,27 @@ class BidDetailSerializer(serializers.ModelSerializer):
         model = Bid
         fields = "__all__"
 
-    def validate(self, attrs):
-        price = attrs["price"]
-        auction = attrs["auction"]
+    # def validate(self, attrs):
+    #     price = attrs["price"]
+    #     auction = attrs["auction"]
 
-        # Check if auction is open
-        if auction.closing_date <= timezone.now():
-            raise serializers.ValidationError(
-                {"price": "Cannot bid on closed auctions"}
-            )
+    #     # Check if auction is open
+    #     if auction.closing_date <= timezone.now():
+    #         raise serializers.ValidationError(
+    #             {"price": "Cannot bid on closed auctions"}
+    #         )
 
-        # Check if bid is highest
-        highest_bid = Bid.objects.filter(auction=auction).first()
+    #     # Check if bid is highest
+    #     highest_bid = Bid.objects.filter(auction=auction).first()
 
-        if highest_bid and price <= highest_bid.price:
-            raise serializers.ValidationError(
-                {"price": f"Must exceed current highest bid ({highest_bid.price})"}
-            )
+    #     if highest_bid and price <= highest_bid.price:
+    #         raise serializers.ValidationError(
+    #             {"price": f"Must exceed current highest bid ({highest_bid.price})"}
+    #         )
 
-        if not highest_bid and price < auction.price:
-            raise serializers.ValidationError(
-                {"price": f"Must meet starting price of {auction.price}"}
-            )
+    #     if not highest_bid and price < auction.price:
+    #         raise serializers.ValidationError(
+    #             {"price": f"Must meet starting price of {auction.price}"}
+    #         )
 
-        return attrs
+    #     return attrs

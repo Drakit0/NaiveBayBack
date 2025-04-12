@@ -16,6 +16,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.response import Response
 from .permissions import IsOwnerOrAdmin
+from decimal import Decimal
 
 
 class CategoryListCreate(generics.ListCreateAPIView):
@@ -87,19 +88,18 @@ class BidListCreate(generics.ListCreateAPIView):
     # TODO: see how to add user
     queryset = Bid.objects.all()
     serializer_class = BidListCreateSerializer
-    permission_classes = [IsOwnerOrAdmin]
+    # permission_classes = [IsOwnerOrAdmin]
 
     def get_queryset(self):
-        return (
-            super()
-            .get_queryset()
-            .filter(get_object_or_404(Auction, id=self.kwargs["pk"]))
-        )
+        auction = get_object_or_404(Auction, id=self.kwargs["pk"])
+        return super().get_queryset().filter(auction=auction)
 
     def perform_create(self, serializer):
         auction_id = self.kwargs["pk"]
         auction = get_object_or_404(Auction, id=auction_id)
-        price = self.request.data.get("price")
+        user = self.request.data.get("user")
+        price_str = self.request.data.get("price")
+        price = Decimal(price_str) if price_str else None
         if auction.closing_date <= timezone.now():
             raise ValidationError({"price": "Cannot bid on closed auctions"})
 
@@ -117,12 +117,24 @@ class BidListCreate(generics.ListCreateAPIView):
             )
 
         # serializer.save(auction_id=auction_id, bidder=self.request.user)
-        serializer.save(auction_id=auction_id)
+        serializer.save(
+            auction_id=auction_id,
+        )
 
 
 class BidRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Bid.objects.all()
     serializer_class = BidDetailSerializer
+    lookup_url_kwarg = "bid_pk"
+
+    def get_queryset(self):
+        bids = super().get_queryset()
+
+        auction_id = self.kwargs.get("pk")
+        # bid_id = self.kwargs.get("bid_pk")
+        # Filter by both auction AND bid ID
+        # return bids.filter(auction_id=auction_id, id=bid_id)
+        return bids.filter(auction_id=auction_id)
 
 
 class UserAuctionListView(APIView):
