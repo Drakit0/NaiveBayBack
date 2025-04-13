@@ -172,3 +172,7 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+djangoServer/bin/python
+djangoServer/bin/python3
+djangoServer/bin/python3.12
