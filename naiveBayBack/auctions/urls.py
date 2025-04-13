@@ -19,4 +19,10 @@ urlpatterns = [
     ),
     path("", AuctionListCreate.as_view(), name="auction-list-create"),
     path("<int:pk>/", AuctionRetrieveUpdateDestroy.as_view(), name="auction-detail"),
+    
+    path("users/", UserAuctionListView.as_view(), name="action-from-users"),
+    
+    path("<int:auction_id>/bids/", BidListCreate.as_view(), name="bid-list-create"),
+    path("<int:auction_id>/bids/<int:pk>/", BidRetrieveUpdateDestroy.as_view(), name="bid-detail"),
+    
 ]
