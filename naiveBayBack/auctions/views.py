@@ -15,23 +15,36 @@ from .serializers import (
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.response import Response
-from .permissions import IsOwnerOrAdmin
+from .permissions import (
+    IsOwnerOrAdmin,
+    IsAuthenticatedAuction,
+    IsAdminCategory)
 from decimal import Decimal
 
 
 class CategoryListCreate(generics.ListCreateAPIView):
+    """
+    List and create categories.
+    """
     queryset = Category.objects.all()
     serializer_class = CategoryListCreateSerializer
+    permission_classes = [IsAdminCategory]
+    
 
 
 class CategoryRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Retrieve, update or delete a category.
+    """
     queryset = Category.objects.all()
     serializer_class = CategoryDetailSerializer
+    permission_classes = [IsAdminUser]
 
 
 class AuctionListCreate(generics.ListCreateAPIView):
     queryset = Auction.objects.all()
     serializer_class = AuctionListCreateSerializer
+    permission_classes = [IsAuthenticatedAuction]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -73,8 +86,10 @@ class AuctionListCreate(generics.ListCreateAPIView):
                 )
         if min_price:
             queryset = queryset.filter(price__gte=min_price)
+            
         if max_price:
             queryset = queryset.filter(price__lte=max_price)
+            
         return queryset
 
 

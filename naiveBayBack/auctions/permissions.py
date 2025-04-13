@@ -11,5 +11,33 @@ class IsOwnerOrAdmin(BasePermission):
         # Permitir acceso de lectura a cualquier usuario (GET, HEAD, OPTIONS)
         if request.method in SAFE_METHODS:
             return True
+        
         # Permitir si el usuario es el creador o es administrador
         return obj.auctioneer == request.user or request.user.is_staff
+
+class IsAuthenticatedAuction(BasePermission):
+    """
+    Permite crear una subasta solo si el usuario está registrado
+    o es administrador. Cualquiera puede consultar (GET).
+    """
+
+    def has_object_permission(self, request, view, obj):
+        # Permitir acceso de lectura a cualquier usuario (GET, HEAD, OPTIONS)
+        if request.method in SAFE_METHODS:
+            return True
+        
+        # Permitir si está registrado
+        return request.user.is_authenticated
+    
+class IsAdminCategory(BasePermission):
+    """
+    Permite editar/eliminar una categoría solo si el usuario es administrador.
+    """
+    
+    def has_object_permission(self, request, view, obj):
+        # Permitir acceso de lectura a cualquier usuario (GET, HEAD, OPTIONS)
+        if request.method in SAFE_METHODS:
+            return True
+        
+        # Permitir si el usuario es administrador
+        return request.user.is_staff
