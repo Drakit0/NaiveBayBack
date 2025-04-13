@@ -15,10 +15,7 @@ from .serializers import (
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.response import Response
-from .permissions import (
-    IsOwnerOrAdmin,
-    IsAuthenticatedAuction,
-    IsAdminCategory)
+from .permissions import IsOwnerOrAdmin, IsAuthenticatedAuction, IsAdminCategory
 from decimal import Decimal
 
 
@@ -28,17 +25,18 @@ class CategoryListCreate(generics.ListCreateAPIView):
     List accessible to all users.
     Create accessible only to administrators.
     """
+
     queryset = Category.objects.all()
     serializer_class = CategoryListCreateSerializer
     permission_classes = [IsAdminCategory]
-    
 
 
 class CategoryRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     """
     Retrieve, update or delete a category.
-    Accessible only to administrators. 
+    Accessible only to administrators.
     """
+
     queryset = Category.objects.all()
     serializer_class = CategoryDetailSerializer
     permission_classes = [IsAdminCategory]
@@ -49,6 +47,7 @@ class AuctionListCreate(generics.ListCreateAPIView):
     List and create auctions.
     List accessible to all users.
     Create accessible only to authenticated users."""
+
     queryset = Auction.objects.all()
     serializer_class = AuctionListCreateSerializer
     permission_classes = [IsAuthenticatedAuction]
@@ -93,10 +92,10 @@ class AuctionListCreate(generics.ListCreateAPIView):
                 )
         if min_price:
             queryset = queryset.filter(price__gte=min_price)
-            
+
         if max_price:
             queryset = queryset.filter(price__lte=max_price)
-            
+
         return queryset
 
 
@@ -105,6 +104,7 @@ class AuctionRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     Retrieve, update or delete an auction.
     Accessible only to administrators or the auctioneer.
     """
+
     queryset = Auction.objects.all()
     serializer_class = AuctionDetailSerializer
     permission_classes = [IsOwnerOrAdmin]
@@ -116,10 +116,11 @@ class BidListCreate(generics.ListCreateAPIView):
     List accessible to all users.
     Create accessible only to authenticated users.
     """
-    # TODO: see how to add user
+
     queryset = Bid.objects.all()
     serializer_class = BidListCreateSerializer
-    permission_classes = [IsAuthenticatedAuction]
+
+    # permission_classes = [IsAuthenticatedAuction]
 
     def get_queryset(self):
         auction = get_object_or_404(Auction, id=self.kwargs["auction_id"])
@@ -148,9 +149,7 @@ class BidListCreate(generics.ListCreateAPIView):
             )
 
         # serializer.save(auction_id=auction_id, bidder=self.request.user)
-        serializer.save(
-            auction_id=auction_id,
-        )
+        serializer.save(auction_id=auction_id, bidder=self.request.user)
 
 
 class BidRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
@@ -158,12 +157,11 @@ class BidRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     Retrieve, update or delete a bid.
     Accessible only to administrators or the bidder.
     """
-    
+
     queryset = Bid.objects.all()
     serializer_class = BidDetailSerializer
-    lookup_url_kwarg = "auction_id"
+    lookup_url_kwarg = "pk"
     permission_classes = [IsAuthenticatedAuction]
-
 
     def get_queryset(self):
         bids = super().get_queryset()
@@ -173,7 +171,7 @@ class BidRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
         # Filter by both auction AND bid ID
         # return bids.filter(auction_id=auction_id, id=bid_id)
         return bids.filter(auction_id=auction_id)
-    
+
     def perform_update(self, serializer):
         bid = self.get_object()
         auction = bid.auction
@@ -210,6 +208,7 @@ class UserAuctionListView(APIView):
     View to list and edit auctions of the authenticated users.
     Accessible only to admin users.
     """
+
     permission_classes = [IsAdminUser]
 
     def get(self, request, *args, **kwargs):

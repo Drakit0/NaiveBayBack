@@ -40,7 +40,7 @@ class AuctionListCreateSerializer(serializers.ModelSerializer):
                 "Closing date must be at least 15 days from now"
             )
         return value
-    
+
     def create(self, validated_data):
         # Set auctioneer to the user from the request, overriding any client input.
         validated_data["auctioneer"] = self.context["request"].user
@@ -69,7 +69,7 @@ class AuctionDetailSerializer(serializers.ModelSerializer):
                 "Closing date must be at least 15 days from now"
             )
         return value
-    
+
     def create(self, validated_data):
         # Set auctioneer to the user from the request, overriding any client input.
         validated_data["auctioneer"] = self.context["request"].user
@@ -81,10 +81,12 @@ class BidListCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bid
         fields = (
+            "id",
             "price",
             "bidder",
             # "auction",
         )
+        read_only_fields = ("bidder",)
 
 
 class BidDetailSerializer(serializers.ModelSerializer):
@@ -95,6 +97,11 @@ class BidDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bid
         fields = "__all__"
+
+        read_only_fields = (
+            "bidder",
+            "auction",
+        )
 
     # def validate(self, attrs):
     #     price = attrs["price"]

@@ -25,6 +25,7 @@ class UserRegisterView(generics.CreateAPIView):
     Allows creating a new user and returns the access token.
     Accessible only to unregistered users.
     """
+
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsNotRegistered]
@@ -50,6 +51,7 @@ class UserListView(generics.ListAPIView):
     View to list all users.
     Accessible only to administrators.
     """
+
     serializer_class = UserSerializer
     queryset = CustomUser.objects.all()
     permission_classes = [IsAdminUser]
@@ -60,6 +62,7 @@ class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     View to retrieve, update, or delete a specific user.
     Accessible only to administrators or the user themselves.
     """
+
     serializer_class = UserSerializer
     queryset = CustomUser.objects.all()
     permission_classes = [IsOwnerOrAdmin]
@@ -71,6 +74,7 @@ class LogoutView(APIView):
     Revokes the user's RefreshToken.
     Accessible only to authenticated users.
     """
+
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -98,30 +102,30 @@ class UserProfileView(APIView):
     permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
 
     def get_object(self):
-        username = self.request.query_params.get('username')
-        
+        username = self.request.query_params.get("username")
+
         if username:
             if self.request.user.is_staff:
                 UserModel = apps.get_model(settings.AUTH_USER_MODEL)
                 try:
                     return UserModel.objects.get(username=username)
-                
+
                 except UserModel.DoesNotExist:
                     raise ValidationError({"detail": "User not found."})
-                    
+
             # Non-staff may only query their own profile.
             if self.request.user.username == username:
                 return CustomUser.objects.get(id=self.request.user.id)
-            
+
             self.permission_denied(self.request)
-            
+
         return self.request.user
 
     def get(self, request):
         user = self.get_object()
         self.check_object_permissions(request, user)
         serializer = UserSerializer(user)
-        
+
         return Response(serializer.data)
 
     def patch(self, request):
@@ -145,6 +149,7 @@ class ChangePasswordView(APIView):
     View to change the password of the authenticated user.
     Accessible only to the user themselves.
     """
+
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
