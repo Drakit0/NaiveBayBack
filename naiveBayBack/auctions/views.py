@@ -25,6 +25,8 @@ from decimal import Decimal
 class CategoryListCreate(generics.ListCreateAPIView):
     """
     List and create categories.
+    List accessible to all users.
+    Create accessible only to administrators.
     """
     queryset = Category.objects.all()
     serializer_class = CategoryListCreateSerializer
@@ -35,6 +37,7 @@ class CategoryListCreate(generics.ListCreateAPIView):
 class CategoryRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     """
     Retrieve, update or delete a category.
+    Accessible only to administrators. 
     """
     queryset = Category.objects.all()
     serializer_class = CategoryDetailSerializer
@@ -42,6 +45,10 @@ class CategoryRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
 
 
 class AuctionListCreate(generics.ListCreateAPIView):
+    """
+    List and create auctions.
+    List accessible to all users.
+    Create accessible only to authenticated users."""
     queryset = Auction.objects.all()
     serializer_class = AuctionListCreateSerializer
     permission_classes = [IsAuthenticatedAuction]
@@ -94,16 +101,25 @@ class AuctionListCreate(generics.ListCreateAPIView):
 
 
 class AuctionRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Retrieve, update or delete an auction.
+    Accessible only to administrators or the auctioneer.
+    """
     queryset = Auction.objects.all()
     serializer_class = AuctionDetailSerializer
     permission_classes = [IsOwnerOrAdmin]
 
 
 class BidListCreate(generics.ListCreateAPIView):
+    """
+    List and create bids.
+    List accessible to all users.
+    Create accessible only to authenticated users.
+    """
     # TODO: see how to add user
     queryset = Bid.objects.all()
     serializer_class = BidListCreateSerializer
-    # permission_classes = [IsOwnerOrAdmin]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         auction = get_object_or_404(Auction, id=self.kwargs["pk"])
@@ -138,9 +154,16 @@ class BidListCreate(generics.ListCreateAPIView):
 
 
 class BidRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Retrieve, update or delete a bid.
+    Accessible only to administrators or the bidder.
+    """
+    
     queryset = Bid.objects.all()
     serializer_class = BidDetailSerializer
     lookup_url_kwarg = "bid_pk"
+    permission_classes = [IsOwnerOrAdmin]
+
 
     def get_queryset(self):
         bids = super().get_queryset()
@@ -153,7 +176,11 @@ class BidRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
 
 
 class UserAuctionListView(APIView):
-    permission_classes = [IsAuthenticated]
+    """
+    View to list and edit auctions of the authenticated users.
+    Accessible only to admin users.
+    """
+    permission_classes = [IsAdminUser]
 
     def get(self, request, *args, **kwargs):
         # Obtener las subastas del usuario autenticado

@@ -14,13 +14,14 @@ from .serializers import UserSerializer, ChangePasswordSerializer
 from rest_framework.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
-from permisions import IsNotRegistered
+from .permisions import IsNotRegistered, IsOwnerOrAdmin
 
 
 class UserRegisterView(generics.CreateAPIView):
     """
-    Vista para registrar un nuevo usuario.
-    Permite crear un nuevo usuario y devuelve el token de acceso.
+    View to register a new user.
+    Allows creating a new user and returns the access token.
+    Accessible only to unregistered users.
     """
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
@@ -44,8 +45,8 @@ class UserRegisterView(generics.CreateAPIView):
 
 class UserListView(generics.ListAPIView):
     """
-    Vista para listar todos los usuarios.
-    Solo accesible para administradores.
+    View to list all users.
+    Accessible only to administrators.
     """
     serializer_class = UserSerializer
     queryset = CustomUser.objects.all()
@@ -54,19 +55,19 @@ class UserListView(generics.ListAPIView):
 
 class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     """
-    Vista para obtener, actualizar o eliminar un usuario específico.
-    Solo accesible para administradores o el propio usuario.
+    View to retrieve, update, or delete a specific user.
+    Accessible only to administrators or the user themselves.
     """
     serializer_class = UserSerializer
     queryset = CustomUser.objects.all()
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsOwnerOrAdmin]
 
 
 class LogoutView(APIView):
     """
-    Vista para realizar el logout del usuario.
-    Revoca el RefreshToken del usuario.
-    Accesible solo para usuarios autenticados.
+    View to perform user logout.
+    Revokes the user's RefreshToken.
+    Accessible only to authenticated users.
     """
     permission_classes = [IsAuthenticated]
 
@@ -93,11 +94,11 @@ class LogoutView(APIView):
 
 class UserProfileView(APIView):
     """
-    Vista para obtener, actualizar o eliminar el perfil del usuario autenticado.
-    Solo accesible para el propio usuario o administradores.
+    View to retrieve, update, or delete the authenticated user's profile.
+    Accessible only to the user themselves or administrators.
     """
     
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsOwnerOrAdmin]
 
     def get(self, request):
         serializer = UserSerializer(request.user)
@@ -118,8 +119,9 @@ class UserProfileView(APIView):
 
 class ChangePasswordView(APIView):
     """
-    Vista para cambiar la contraseña del usuario autenticado.
-    Solo accesible para el propio usuario."""
+    View to change the password of the authenticated user.
+    Accessible only to the user themselves.
+    """
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
