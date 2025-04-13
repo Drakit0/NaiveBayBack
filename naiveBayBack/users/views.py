@@ -12,7 +12,7 @@ from rest_framework import status, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import UserSerializer, ChangePasswordSerializer
+from .serializers import UserSerializer, ChangePasswordSerializer, MyAuctionsSerializer, MyBidsSerializer
 from rest_framework.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
@@ -166,3 +166,63 @@ class ChangePasswordView(APIView):
             user.save()
             return Response({"detail": "Password updated successfully."})
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserAuctionsListView(generics.ListAPIView):
+    """
+    View to list all auctions of a specific user.
+    Accessible only to the user themselves or an administrator.
+    """
+    serializer_class = MyAuctionsSerializer
+    permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            # Admins can view auctions of any user
+            return user.auctions.all()
+        
+        # Regular users can only view their own auctions
+        return user.auctions.filter(owner=user)
+    
+    def get(self, request, *args, **kwargs):
+        user = self.request.user
+        if user.is_staff:
+            # Admins can view auctions of any user
+            queryset = self.get_queryset()
+            
+        else:
+            # Regular users can only view their own auctions
+            queryset = self.get_queryset().filter(owner=user)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+class UserBidsListView(generics.ListAPIView):
+    """
+    View to list all bids of a specific user.
+    Accessible only to the user themselves or an administrator.
+    """
+    serializer_class = MyBidsSerializer
+    permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            # Admins can view bids of any user
+            return user.bids.all()
+        
+        # Regular users can only view their own bids
+        return user.bids.filter(bidder=user)
+    
+    def get(self, request, *args, **kwargs):
+        user = self.request.user
+        if user.is_staff:
+            # Admins can view bids of any user
+            queryset = self.get_queryset()
+            
+        else:
+            # Regular users can only view their own bids
+            queryset = self.get_queryset().filter(bidder=user)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
