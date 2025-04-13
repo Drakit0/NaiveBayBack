@@ -4,9 +4,9 @@ from .views import (
     CategoryRetrieveUpdateDestroy,
     AuctionListCreate,
     AuctionRetrieveUpdateDestroy,
+    UserAuctionListView,
     BidListCreate,
     BidRetrieveUpdateDestroy,
-    UserAuctionListView,
 )
 
 app_name = "auctions"
@@ -19,11 +19,4 @@ urlpatterns = [
     ),
     path("", AuctionListCreate.as_view(), name="auction-list-create"),
     path("<int:pk>/", AuctionRetrieveUpdateDestroy.as_view(), name="auction-detail"),
-    path("<int:pk>/bids/", BidListCreate.as_view(), name="bid-list-create"),
-    path(
-        "<int:pk>/bids/<int:bid_pk>/",
-        BidRetrieveUpdateDestroy.as_view(),
-        name="bid-detail",
-    ),
-    path("users/", UserAuctionListView.as_view(), name="action-from-users"),
 ]
