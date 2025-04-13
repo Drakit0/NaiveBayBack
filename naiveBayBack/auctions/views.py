@@ -82,6 +82,6 @@ class BidListCreate(generics.ListCreateAPIView):
     serializer_class = BidListCreateSerializer
 
 
-class AuctionRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+class BidRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Bid.objects.all()
     serializer_class = BidDetailSerializer
