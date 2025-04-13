@@ -34,10 +34,17 @@ class IsAdminCategory(BasePermission):
     Permite editar/eliminar una categoría solo si el usuario es administrador.
     """
     
-    def has_object_permission(self, request, view, obj):
+    # def has_object_permission(self, request, view, obj):
+    #     # Permitir acceso de lectura a cualquier usuario (GET, HEAD, OPTIONS)
+    #     if request.method in SAFE_METHODS:
+    #         return True
+        
+    #     # Permitir si el usuario es administrador
+    #     return request.user.is_staff
+    
+    def has_permission(self, request, view):
         # Permitir acceso de lectura a cualquier usuario (GET, HEAD, OPTIONS)
         if request.method in SAFE_METHODS:
             return True
-        
-        # Permitir si el usuario es administrador
+        # Para métodos que crean, actualizan o eliminan: permite solo a usuarios staff.
         return request.user.is_staff

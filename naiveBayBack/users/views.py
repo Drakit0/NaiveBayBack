@@ -1,10 +1,12 @@
 from django.shortcuts import render
 
 # Create your views here.
+from django.conf import settings
 from rest_framework import status, generics
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import CustomUser
+from django.apps import apps
 from .serializers import UserSerializer
 from rest_framework import status, generics
 from rest_framework.views import APIView
@@ -14,7 +16,7 @@ from .serializers import UserSerializer, ChangePasswordSerializer
 from rest_framework.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
-from .permisions import IsNotRegistered, IsOwnerOrAdmin
+from .permissions import IsNotRegistered, IsOwnerOrAdmin
 
 
 class UserRegisterView(generics.CreateAPIView):
@@ -93,26 +95,47 @@ class LogoutView(APIView):
 
 
 class UserProfileView(APIView):
-    """
-    View to retrieve, update, or delete the authenticated user's profile.
-    Accessible only to the user themselves or administrators.
-    """
-    
-    permission_classes = [IsOwnerOrAdmin]
+    permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
+
+    def get_object(self):
+        username = self.request.query_params.get('username')
+        
+        if username:
+            if self.request.user.is_staff:
+                UserModel = apps.get_model(settings.AUTH_USER_MODEL)
+                try:
+                    return UserModel.objects.get(username=username)
+                
+                except UserModel.DoesNotExist:
+                    raise ValidationError({"detail": "User not found."})
+                    
+            # Non-staff may only query their own profile.
+            if self.request.user.username == username:
+                return CustomUser.objects.get(id=self.request.user.id)
+            
+            self.permission_denied(self.request)
+            
+        return self.request.user
 
     def get(self, request):
-        serializer = UserSerializer(request.user)
+        user = self.get_object()
+        self.check_object_permissions(request, user)
+        serializer = UserSerializer(user)
+        
         return Response(serializer.data)
 
     def patch(self, request):
-        serializer = UserSerializer(request.user, data=request.data, partial=True)
+        user = self.get_object()
+        self.check_object_permissions(request, user)
+        serializer = UserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request):
-        user = request.user
+        user = self.get_object()
+        self.check_object_permissions(request, user)
         user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 

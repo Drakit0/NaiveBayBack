@@ -41,7 +41,7 @@ class CategoryRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = Category.objects.all()
     serializer_class = CategoryDetailSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminCategory]
 
 
 class AuctionListCreate(generics.ListCreateAPIView):
