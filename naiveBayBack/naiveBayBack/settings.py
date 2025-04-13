@@ -10,6 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import os
+import dj_database_url
+from dotenv import load_dotenv
 from pathlib import Path
 from datetime import timedelta
 
@@ -26,7 +29,7 @@ SECRET_KEY = "REDACTED"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0", "@db.example.com"]
 
 
 # Application definition
@@ -83,11 +86,9 @@ WSGI_APPLICATION = "naiveBayBack.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+load_dotenv()
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    'default': dj_database_url.config(default=os.getenv("DATABASE_URL"))
 }
 
 
