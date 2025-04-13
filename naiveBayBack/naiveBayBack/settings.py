@@ -29,7 +29,7 @@ SECRET_KEY = "REDACTED"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0", "@db.example.com"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0", "@db.example.com", 'naivebayback.onrender.com']
 
 
 # Application definition
