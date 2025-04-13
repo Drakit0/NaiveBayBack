@@ -12,8 +12,12 @@ class IsOwnerOrAdmin(BasePermission):
         if request.method in SAFE_METHODS:
             return True
         
-        # Permitir si el usuario es el creador o es administrador
-        return obj.auctioneer == request.user or request.user.is_staff
+        try:
+            # Permitir si el usuario es el creador o es administrador
+            return obj.auctioneer == request.user or request.user.is_staff
+        
+        except AttributeError:
+            return obj.bidder == request.user or request.user.is_staff
 
 class IsAuthenticatedAuction(BasePermission):
     """
@@ -21,7 +25,7 @@ class IsAuthenticatedAuction(BasePermission):
     o es administrador. Cualquiera puede consultar (GET).
     """
 
-    def has_object_permission(self, request, view, obj):
+    def has_permission(self, request, view):
         # Permitir acceso de lectura a cualquier usuario (GET, HEAD, OPTIONS)
         if request.method in SAFE_METHODS:
             return True

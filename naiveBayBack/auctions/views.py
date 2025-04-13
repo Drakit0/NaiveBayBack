@@ -119,14 +119,14 @@ class BidListCreate(generics.ListCreateAPIView):
     # TODO: see how to add user
     queryset = Bid.objects.all()
     serializer_class = BidListCreateSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedAuction]
 
     def get_queryset(self):
-        auction = get_object_or_404(Auction, id=self.kwargs["pk"])
+        auction = get_object_or_404(Auction, id=self.kwargs["auction_id"])
         return super().get_queryset().filter(auction=auction)
 
     def perform_create(self, serializer):
-        auction_id = self.kwargs["pk"]
+        auction_id = self.kwargs["auction_id"]
         auction = get_object_or_404(Auction, id=auction_id)
         user = self.request.data.get("user")
         price_str = self.request.data.get("price")
@@ -161,18 +161,48 @@ class BidRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     
     queryset = Bid.objects.all()
     serializer_class = BidDetailSerializer
-    lookup_url_kwarg = "bid_pk"
-    permission_classes = [IsOwnerOrAdmin]
+    lookup_url_kwarg = "auction_id"
+    permission_classes = [IsAuthenticatedAuction]
 
 
     def get_queryset(self):
         bids = super().get_queryset()
 
-        auction_id = self.kwargs.get("pk")
+        auction_id = self.kwargs.get("auction_id")
         # bid_id = self.kwargs.get("bid_pk")
         # Filter by both auction AND bid ID
         # return bids.filter(auction_id=auction_id, id=bid_id)
         return bids.filter(auction_id=auction_id)
+    
+    def perform_update(self, serializer):
+        bid = self.get_object()
+        auction = bid.auction
+        price = serializer.validated_data.get("price")
+
+        if auction.closing_date <= timezone.now():
+            raise ValidationError({"price": "Cannot update bid on closed auctions"})
+
+        highest_bid = Bid.objects.filter(auction=auction).exclude(id=bid.id).first()
+
+        if highest_bid and price <= highest_bid.price:
+            raise ValidationError(
+                {"price": f"Must exceed current highest bid ({highest_bid.price})"}
+            )
+
+        if not highest_bid and price < auction.price:
+            raise ValidationError(
+                {"price": f"Must meet starting price of {auction.price}"}
+            )
+
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        auction = instance.auction
+
+        if auction.closing_date <= timezone.now():
+            raise ValidationError({"detail": "Cannot delete bid on closed auctions"})
+
+        instance.delete()
 
 
 class UserAuctionListView(APIView):

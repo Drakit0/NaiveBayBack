@@ -27,6 +27,7 @@ class AuctionListCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Auction
         fields = "__all__"
+        read_only_fields = ("auctioneer", "creation_date")
 
     @extend_schema_field(serializers.BooleanField())
     def get_isOpen(self, obj):
@@ -39,6 +40,11 @@ class AuctionListCreateSerializer(serializers.ModelSerializer):
                 "Closing date must be at least 15 days from now"
             )
         return value
+    
+    def create(self, validated_data):
+        # Set auctioneer to the user from the request, overriding any client input.
+        validated_data["auctioneer"] = self.context["request"].user
+        return super().create(validated_data)
 
 
 class AuctionDetailSerializer(serializers.ModelSerializer):
@@ -51,6 +57,7 @@ class AuctionDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Auction
         fields = "__all__"
+        read_only_fields = ("auctioneer", "creation_date")
 
     @extend_schema_field(serializers.BooleanField())
     def get_isOpen(self, obj):
@@ -62,6 +69,11 @@ class AuctionDetailSerializer(serializers.ModelSerializer):
                 "Closing date must be at least 15 days from now"
             )
         return value
+    
+    def create(self, validated_data):
+        # Set auctioneer to the user from the request, overriding any client input.
+        validated_data["auctioneer"] = self.context["request"].user
+        return super().create(validated_data)
 
 
 class BidListCreateSerializer(serializers.ModelSerializer):
