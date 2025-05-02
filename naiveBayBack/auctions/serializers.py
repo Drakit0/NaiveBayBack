@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.utils import timezone
-from .models import Category, Auction, Bid
+from .models import Category, Auction, Bid, Rating
 from drf_spectacular.utils import extend_schema_field
 from datetime import timedelta
 
@@ -27,11 +27,14 @@ class AuctionListCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Auction
         fields = "__all__"
-        read_only_fields = ("auctioneer", "creation_date")
+        read_only_fields = ("auctioneer", "creation_date", "avg_rating")
 
     @extend_schema_field(serializers.BooleanField())
     def get_isOpen(self, obj):
         return obj.closing_date > timezone.now()
+    
+    def get_avg_rating(self, obj):
+        return obj.avg_rating
 
     def validate_closing_date(self, value):
         # TODO: make it so the closing 15 days after creation works
@@ -53,15 +56,19 @@ class AuctionDetailSerializer(serializers.ModelSerializer):
     )
     closing_date = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%SZ")
     isOpen = serializers.SerializerMethodField(read_only=True)
+    avg_rating = serializers.FloatField(read_only=True)
 
     class Meta:
         model = Auction
         fields = "__all__"
-        read_only_fields = ("auctioneer", "creation_date")
+        read_only_fields = ("auctioneer", "creation_date", "avg_rating")
 
     @extend_schema_field(serializers.BooleanField())
     def get_isOpen(self, obj):
         return obj.closing_date > timezone.now()
+    
+    def get_avg_rating(self, obj):
+        return obj.avg_rating
 
     def validate_closing_date(self, value):
         if value <= timezone.now() + timedelta(days=15):
@@ -127,3 +134,14 @@ class BidDetailSerializer(serializers.ModelSerializer):
     #         )
 
     #     return attrs
+    
+class RatingDetailSerializer(serializers.ModelSerializer):
+    
+    creation_date = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%SZ", read_only=True)
+    
+    class Meta:
+        model = Rating
+        fields = "__all__"
+        read_only_fields = ("user", "auction")
+        
+    

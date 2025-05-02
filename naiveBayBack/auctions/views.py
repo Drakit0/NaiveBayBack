@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from rest_framework import generics, status
-from .models import Category, Auction, Bid
+from .models import Category, Auction, Bid, Rating
 from django.db.models import Q
 from rest_framework.exceptions import ValidationError
 from .serializers import (
@@ -11,11 +11,12 @@ from .serializers import (
     AuctionDetailSerializer,
     BidListCreateSerializer,
     BidDetailSerializer,
+    RatingDetailSerializer,
 )
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.response import Response
-from .permissions import IsOwnerOrAdmin, IsAuthenticatedAuction, IsAdminCategory
+from .permissions import IsAuthenticatedAuction, IsAdminCategory, IsAuctioneerOrAdmin, IsRaterOrAdmin, IsBidderOrAdmin
 from decimal import Decimal
 
 
@@ -107,7 +108,7 @@ class AuctionRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
 
     queryset = Auction.objects.all()
     serializer_class = AuctionDetailSerializer
-    permission_classes = [IsOwnerOrAdmin]
+    permission_classes = [IsAuctioneerOrAdmin]
 
 
 class BidListCreate(generics.ListCreateAPIView):
@@ -211,8 +212,50 @@ class UserAuctionListView(APIView):
 
     permission_classes = [IsAdminUser]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request):
         # Obtener las subastas del usuario autenticado
         user_auctions = Auction.objects.filter(auctioneer=request.user)
         serializer = AuctionListCreateSerializer(user_auctions, many=True)
         return Response(serializer.data)
+    
+class RatingRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Retrieve, update or delete a rating.
+    Accessible only to administrators or the rater.
+    """
+    
+    queryset = Rating.objects.all()
+    serializer_class = RatingDetailSerializer
+    permission_classes = [IsAuthenticated, IsRaterOrAdmin]
+    
+    def get_object(self):
+        # fetch the auction (404 if bad ID)
+        auction = get_object_or_404(Auction, pk=self.kwargs['auction_id'])
+        # get the user’s Rating or create one with rating=1
+        rating_obj, created = Rating.objects.get_or_create(
+            auction=auction,
+            user=self.request.user,
+            defaults={'rating': 1},
+        )
+        return rating_obj
+    
+    def perform_update(self, serializer):
+        rating = self.get_object()
+        auction = rating.auction
+        rating_value = serializer.validated_data.get("rating")
+        
+        if rating_value < 1 or rating_value > 5:
+            raise ValidationError({"rating": "Rating must be between 1 and 5"})
+        
+        if auction.closing_date <= timezone.now():
+            raise ValidationError({"detail": "Cannot update rating on closed auctions"})
+        
+        serializer.save()
+        
+    def perform_destroy(self, instance):
+        auction = instance.auction
+
+        if auction.closing_date <= timezone.now():
+            raise ValidationError({"detail": "Cannot delete rating on closed auctions"})
+
+        instance.delete()

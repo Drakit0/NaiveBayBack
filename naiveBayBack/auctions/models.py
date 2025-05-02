@@ -1,5 +1,5 @@
 from django.db import models
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from users.models import CustomUser
 from decimal import Decimal
 
@@ -20,7 +20,7 @@ class Auction(models.Model):
     price = models.DecimalField(
         max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal("0"))]
     )
-    rating = models.DecimalField(max_digits=3, decimal_places=2)
+    # rating = models.DecimalField(max_digits=3, decimal_places=2)
     stock = models.IntegerField(validators=[MinValueValidator(1)])
     brand = models.CharField(max_length=100)
     category = models.ForeignKey(
@@ -33,6 +33,11 @@ class Auction(models.Model):
         CustomUser, related_name="auctions", on_delete=models.CASCADE
     )
 
+    @property
+    def avg_rating(self):
+        agg = self.ratings.aggregate(avg=models.Avg("rating"))
+        return round(agg["avg"] or 1.0, 2)
+    
     class Meta:
         ordering = ("id",)
 
@@ -55,3 +60,16 @@ class Bid(models.Model):
 
     def __str__(self):
         return f"{self.id}-{self.price}"
+    
+class Rating(models.Model):
+    rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    auction = models.ForeignKey(Auction, related_name="ratings", on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, related_name="ratings", on_delete=models.CASCADE)
+    creation_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-rating",)
+        unique_together = ("user", "auction")
+        
+    def __str__(self):
+        return f"{self.user},{self.auction}-{self.rating}"
