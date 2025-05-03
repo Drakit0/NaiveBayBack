@@ -27,7 +27,10 @@ class Auction(models.Model):
     category = models.ForeignKey(
         Category, related_name="auctions", on_delete=models.CASCADE
     )
-    thumbnail = models.URLField()
+    
+    thumbnail = models.URLField(blank=True, null=True)
+    image = models.ImageField(blank=True, null=True, upload_to="thumbnails/")
+    
     creation_date = models.DateTimeField(auto_now_add=True)
     closing_date = models.DateTimeField()
     auctioneer = models.ForeignKey(
@@ -37,7 +40,16 @@ class Auction(models.Model):
     @property
     def avg_rating(self):
         agg = self.ratings.aggregate(avg=models.Avg("rating"))
+        
         return round(agg["avg"] or 1.0, 2)
+    
+    @property
+    def image_url(self):
+        if self.thumbnail:
+            return self.thumbnail
+        
+        if self.image:
+            return self.image.url
     
     class Meta:
         ordering = ("id",)

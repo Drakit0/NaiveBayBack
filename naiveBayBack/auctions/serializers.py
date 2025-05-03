@@ -23,11 +23,21 @@ class AuctionListCreateSerializer(serializers.ModelSerializer):
     )
     closing_date = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%SZ")
     isOpen = serializers.SerializerMethodField(read_only=True)
+    
+    thumbnail = serializers.URLField( # Thumbnail image (url)
+        required=False,
+        allow_null=True)
+    image = serializers.ImageField( # Image file (.png, jpg...)
+        required=False,
+        allow_null=True,
+        use_url=True
+    )
+    image_url = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Auction
         fields = "__all__"
-        read_only_fields = ("auctioneer", "creation_date", "avg_rating")
+        read_only_fields = ("id", "auctioneer", "creation_date")
 
     @extend_schema_field(serializers.BooleanField())
     def get_isOpen(self, obj):
@@ -35,6 +45,9 @@ class AuctionListCreateSerializer(serializers.ModelSerializer):
     
     def get_avg_rating(self, obj):
         return obj.avg_rating
+    
+    def get_image_url(self, obj):
+        return obj.image_url
 
     def validate_closing_date(self, value):
         # TODO: make it so the closing 15 days after creation works
@@ -43,6 +56,13 @@ class AuctionListCreateSerializer(serializers.ModelSerializer):
                 "Closing date must be at least 15 days from now"
             )
         return value
+
+    def validate_imgs(self, attrs):
+        if not attrs.get("thumbnail") and not attrs.get("image"):
+            raise serializers.ValidationError(
+                "You should provide at least one image (thumbnail or image)"
+            )
+        return attrs
 
     def create(self, validated_data):
         # Set auctioneer to the user from the request, overriding any client input.
@@ -57,6 +77,16 @@ class AuctionDetailSerializer(serializers.ModelSerializer):
     closing_date = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%SZ")
     isOpen = serializers.SerializerMethodField(read_only=True)
     avg_rating = serializers.FloatField(read_only=True)
+    
+    thumbnail = serializers.URLField( # Thumbnail image (url)
+        required=False,
+        allow_null=True)
+    image = serializers.ImageField( # Image file (.png, jpg...)
+        required=False,
+        allow_null=True,
+        use_url=True
+    )
+    image_url = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Auction
@@ -69,6 +99,16 @@ class AuctionDetailSerializer(serializers.ModelSerializer):
     
     def get_avg_rating(self, obj):
         return obj.avg_rating
+    
+    def get_image_url(self, obj):
+        return obj.image_url
+    
+    def validate_imgs(self, attrs):
+        if not attrs.get("thumbnail") and not attrs.get("image"):
+            raise serializers.ValidationError(
+                "You should provide at least one image (thumbnail or image)"
+            )
+        return attrs
 
     def validate_closing_date(self, value):
         if value <= timezone.now() + timedelta(days=15):

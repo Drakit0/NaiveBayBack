@@ -15,6 +15,7 @@ from .serializers import (
     CommentDetailSerializer,
     CommentListCreateSerializer,
 )
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
@@ -54,6 +55,7 @@ class AuctionListCreate(generics.ListCreateAPIView):
     queryset = Auction.objects.all()
     serializer_class = AuctionListCreateSerializer
     permission_classes = [IsAuthenticatedAuction]
+    parser_classes = [JSONParser, FormParser, MultiPartParser]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -111,6 +113,7 @@ class AuctionRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Auction.objects.all()
     serializer_class = AuctionDetailSerializer
     permission_classes = [IsAuctioneerOrAdmin]
+    parser_classes = [JSONParser, FormParser, MultiPartParser]
 
 
 class BidListCreate(generics.ListCreateAPIView):
