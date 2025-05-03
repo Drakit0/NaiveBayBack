@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from rest_framework import generics, status
-from .models import Category, Auction, Bid, Rating
+from .models import Category, Auction, Bid, Rating, Comment
 from django.db.models import Q
 from rest_framework.exceptions import ValidationError
 from .serializers import (
@@ -12,11 +12,13 @@ from .serializers import (
     BidListCreateSerializer,
     BidDetailSerializer,
     RatingDetailSerializer,
+    CommentDetailSerializer,
+    CommentListCreateSerializer,
 )
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
-from .permissions import IsAuthenticatedAuction, IsAdminCategory, IsAuctioneerOrAdmin, IsRaterOrAdmin, IsBidderOrAdmin
+from .permissions import IsAuthenticatedAuction, IsAdminCategory, IsAuctioneerOrAdmin, IsRaterComenterOrAdmin, IsBidderOrAdmin
 from decimal import Decimal
 
 
@@ -226,7 +228,7 @@ class RatingRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     
     queryset = Rating.objects.all()
     serializer_class = RatingDetailSerializer
-    permission_classes = [IsAuthenticated, IsRaterOrAdmin]
+    permission_classes = [IsAuthenticatedOrReadOnly, IsRaterComenterOrAdmin]
     
     def get_object(self):
         # fetch the auction (404 if bad ID)
@@ -259,3 +261,64 @@ class RatingRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
             raise ValidationError({"detail": "Cannot delete rating on closed auctions"})
 
         instance.delete()
+        
+class CommentListCreate(generics.ListCreateAPIView):
+    """
+    List and create comments.
+    List accessible to all users.
+    Create accessible only to authenticated users.
+    """
+
+    queryset = Comment.objects.all()
+    serializer_class = CommentListCreateSerializer
+    permission_classes = [IsRaterComenterOrAdmin]
+
+    def get_queryset(self):
+        return super().get_queryset().filter(
+            auction_id=self.kwargs["auction_id"]
+        )
+
+    def perform_create(self, serializer):
+        auction = get_object_or_404(Auction, id=self.kwargs["auction_id"])
+        serializer.save(user=self.request.user, auction=auction)    
+
+    
+class CommentRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Retrieve, update or delete a comment.
+    Accessible only to administrators or the commenter.
+    """
+
+    queryset = Comment.objects.all()
+    serializer_class = CommentDetailSerializer
+    permission_classes = [IsRaterComenterOrAdmin]
+    
+    def get_object(self):
+        auction = get_object_or_404(Auction, id=self.kwargs["auction_id"])
+        comment = get_object_or_404(
+            Comment,
+            pk = self.kwargs["pk"],
+            auction = auction
+        )
+        self.check_object_permissions(self.request, comment)
+        return comment
+    
+    def perform_update(self, serializer):
+        comment = self.get_object()
+        auction = comment.auction
+        comment.edit_date = timezone.now()
+        
+        if auction.closing_date <= timezone.now():
+            raise ValidationError({"detail": "Cannot update comment on closed auctions"})
+        
+        serializer.save()
+        
+    def perform_destroy(self, instance):
+        auction = instance.auction
+
+        if auction.closing_date <= timezone.now():
+            raise ValidationError({"detail": "Cannot delete comment on closed auctions"})
+
+        instance.delete()
+
+

@@ -5,6 +5,7 @@ from decimal import Decimal
 
 
 class Category(models.Model):
+    
     name = models.CharField(max_length=50, blank=False, unique=True)
 
     class Meta:
@@ -13,8 +14,8 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
-
 class Auction(models.Model):
+    
     title = models.CharField(max_length=150)
     description = models.TextField()
     price = models.DecimalField(
@@ -44,8 +45,8 @@ class Auction(models.Model):
     def __str__(self):
         return self.title
 
-
 class Bid(models.Model):
+    
     price = models.DecimalField(
         max_digits=10, decimal_places=2, validators=[MinValueValidator(0)]
     )
@@ -62,6 +63,7 @@ class Bid(models.Model):
         return f"{self.id}-{self.price}"
     
 class Rating(models.Model):
+    
     rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     auction = models.ForeignKey(Auction, related_name="ratings", on_delete=models.CASCADE)
     user = models.ForeignKey(CustomUser, related_name="ratings", on_delete=models.CASCADE)
@@ -73,3 +75,21 @@ class Rating(models.Model):
         
     def __str__(self):
         return f"{self.user},{self.auction}-{self.rating}"
+    
+class Comment(models.Model):
+    
+    title = models.CharField(max_length=500)
+    content = models.TextField()
+    creation_date = models.DateTimeField(auto_now_add=True)
+    edit_date = models.DateTimeField(auto_now=True)
+    user = models.ForeignKey(CustomUser, related_name="comments", on_delete=models.CASCADE)
+    auction = models.ForeignKey(Auction, related_name="comments", on_delete=models.CASCADE)
+    id = models.AutoField(primary_key=True)
+    
+    class Meta:
+        ordering = ("-creation_date",)
+        
+    def __str__(self):
+        return f"{self.user_id} - {self.auction_id} - {self.title} "
+    
+    

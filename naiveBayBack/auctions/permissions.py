@@ -31,9 +31,9 @@ class IsBidderOrAdmin(BasePermission):
         return obj.bidder == request.user or request.user.is_staff
 
 
-class IsRaterOrAdmin(BasePermission):
+class IsRaterComenterOrAdmin(BasePermission):
     """
-    Allows editing/deleting a rating only if the user is the rater
+    Allows editing/deleting a rating or a comment only if the user is the rater
     or an administrator. Anyone can view (GET).
     """
 

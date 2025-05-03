@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.utils import timezone
-from .models import Category, Auction, Bid, Rating
+from .models import Category, Auction, Bid, Rating, Comment
 from drf_spectacular.utils import extend_schema_field
 from datetime import timedelta
 
@@ -144,4 +144,18 @@ class RatingDetailSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = ("user", "auction")
         
+class CommentDetailSerializer(serializers.ModelSerializer):
     
+    creation_date = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%SZ", read_only=True)
+    edit_date = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%SZ", read_only=True)
+    
+    class Meta:
+        model = Comment
+        fields = "__all__"
+        read_only_fields = ("id","user", "auction", "creation_date", "edit_date")
+        
+class CommentListCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ["id", "title", "content", "creation_date", "edit_date"]
+        read_only_fields = ["id","creation_date", "edit_date"]
