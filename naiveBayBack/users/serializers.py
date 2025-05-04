@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import CustomUser
-from auctions.models import Auction, Bid
+from auctions.models import Auction, Bid, Rating, Comment
+from django.utils import timezone
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -45,34 +46,37 @@ class MyAuctionsSerializer(serializers.ModelSerializer):
             "title",
             "description",
             "price",
-            "rating",
+            "avg_rating",
             "stock",
             "brand",
             "category",
             "thumbnail",
+            "image",
             "creation_date",
             "closing_date",
-            "auctioneer",
+            # "auctioneer",
         )
+        
         read_only_fields = (
             "id",
             "title",
             "description",
             "price",
-            "rating",
+            "avg_rating",
             "stock",
             "brand",
             "category",
             "thumbnail",
+            "image",
             "creation_date",
             "closing_date",
-            "auctioneer",
+            # "auctioneer",
         )
 
 
 class MyBidsSerializer(serializers.ModelSerializer):
     auction = serializers.StringRelatedField(read_only=True)
-    bidder = serializers.StringRelatedField(read_only=True)
+    # bidder = serializers.StringRelatedField(read_only=True)
 
     class Meta:
         model = Bid
@@ -80,12 +84,84 @@ class MyBidsSerializer(serializers.ModelSerializer):
             "id",
             "price",
             "auction",
-            "bidder",
+            # "bidder",
             "creation_date",
         )
         read_only_fields = (
             "id",
             "auction",
-            "bidder",
+            # "bidder",
             "creation_date",
         )
+        
+class MyRatingsSerializer(serializers.ModelSerializer):
+    
+    auction_title = serializers.CharField(source="auction.title", read_only=True)
+    auction_price = serializers.DecimalField(
+        source="auction.price",
+        max_digits=10,
+        decimal_places=2,
+        read_only=True
+    )
+    auction_category = serializers.CharField(
+        source="auction.category.name",
+        read_only=True
+    )
+    is_open = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Rating
+        fields = (
+            "auction_title",
+            "auction_price",
+            "auction_category",
+            "is_open",
+            "rating",
+        )
+        read_only_fields = (
+            "auction_title",
+            "auction_price",
+            "auction_category",
+            "is_open",
+            "rating",
+        )
+
+    def get_is_open(self, obj):
+        return obj.auction.closing_date > timezone.now()
+    
+class MyCommentsSerializer(serializers.ModelSerializer):
+    
+    auction_title = serializers.CharField(source="auction.title", read_only=True)
+    auction_price = serializers.DecimalField(
+        source="auction.price",
+        max_digits=10,
+        decimal_places=2,
+        read_only=True
+    )
+    auction_category = serializers.CharField(
+        source="auction.category.name",
+        read_only=True
+    )
+    is_open = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = (
+            "auction_title",
+            "auction_price",
+            "auction_category",
+            "is_open",
+            "title",
+            "content",
+        )
+        read_only_fields = (
+            "auction_title",
+            "auction_price",
+            "auction_category",
+            "is_open",
+            "title",
+            "content",
+        )
+
+    def get_is_open(self, obj):
+        return obj.auction.closing_date > timezone.now()

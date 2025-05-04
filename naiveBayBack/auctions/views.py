@@ -65,6 +65,9 @@ class AuctionListCreate(generics.ListCreateAPIView):
         category = params.get("category")
         min_price = params.get("min_price")
         max_price = params.get("max_price")
+        min_rating = params.get("min_rating")
+        max_rating = params.get("max_rating")
+        state = params.get("state")
 
         if search and len(search) < 3:
             raise ValidationError(
@@ -79,8 +82,8 @@ class AuctionListCreate(generics.ListCreateAPIView):
             )
 
         if category:
-            # TODO: see how I can make it so the category exists in the db
-            queryset = queryset.filter(category__name__icontains=category)
+            # see how I can make it so the category exists in the db
+            queryset = queryset.filter(category__id=category)
 
         if min_price and max_price:
             if float(min_price) > float(max_price):
@@ -100,7 +103,39 @@ class AuctionListCreate(generics.ListCreateAPIView):
 
         if max_price:
             queryset = queryset.filter(price__lte=max_price)
-
+            
+        if min_rating and max_rating:
+            if float(min_rating) > float(max_rating):
+                raise ValidationError(
+                    {
+                        "min_rating": "Minimum rating cannot be greater than maximum rating."
+                    },
+                    code=status.HTTP_400_BAD_REQUEST,
+                )
+            if float(min_rating) < 0 or float(max_rating) < 0:
+                raise ValidationError(
+                    {"rating": "Rating cannot be negative."},
+                    code=status.HTTP_400_BAD_REQUEST,
+                )
+                
+        if min_rating:
+            queryset = queryset.filter(rating__gte=min_rating)
+            
+        if max_rating:
+            queryset = queryset.filter(rating__lte=max_rating)
+            
+        if state:
+            if state == "open":
+                queryset = queryset.filter(closing_date__gt=timezone.now())
+                
+            elif state == "closed":
+                queryset = queryset.filter(closing_date__lte=timezone.now())
+                
+            else:
+                raise ValidationError(
+                    {"state": "State must be either 'open' or 'closed'."},
+                    code=status.HTTP_400_BAD_REQUEST,
+                )
         return queryset
 
 
@@ -231,7 +266,7 @@ class RatingRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     
     queryset = Rating.objects.all()
     serializer_class = RatingDetailSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly, IsRaterComenterOrAdmin]
+    permission_classes = [IsAuthenticated, IsRaterComenterOrAdmin]
     
     def get_object(self):
         # fetch the auction (404 if bad ID)
@@ -323,5 +358,4 @@ class CommentRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
             raise ValidationError({"detail": "Cannot delete comment on closed auctions"})
 
         instance.delete()
-
 

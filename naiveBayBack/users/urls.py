@@ -8,7 +8,9 @@ from .views import (
     ChangePasswordView,
     UserAuctionsListView,
     UserBidsListView,
-    UserRegisterView
+    UserRegisterView,
+    UserRatingsListView,
+    UserCommentsListView,
 )
 from rest_framework_simplejwt.views import TokenObtainPairView
 
@@ -27,6 +29,9 @@ urlpatterns = [
     path("log-out/", LogoutView.as_view(), name="log-out"),
     path("myAuctions/", UserAuctionsListView.as_view(), name="user-auctions"),
     path("myBids/", UserBidsListView.as_view(), name="user-bids"),
+    path("myRatings/", UserRatingsListView.as_view(), name="user-ratings"),
+    path("myComments/", UserCommentsListView.as_view(), name="user-comments"),
+    
     path("register/", UserRegisterView.as_view(), name="user-register"),
 
     

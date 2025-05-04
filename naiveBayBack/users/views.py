@@ -7,7 +7,6 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import CustomUser
 from django.apps import apps
-from .serializers import UserSerializer
 from rest_framework import status, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -17,11 +16,16 @@ from .serializers import (
     ChangePasswordSerializer,
     MyAuctionsSerializer,
     MyBidsSerializer,
+    MyRatingsSerializer,
+    MyCommentsSerializer,
 )
-from rest_framework.exceptions import ValidationError
+from auctions.models import Auction, Bid, Rating, Comment
+from .models import CustomUser
+from rest_framework.exceptions import ValidationError, NotFound
 from django.contrib.auth.password_validation import validate_password
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from .permissions import IsNotRegistered, IsOwnerOrAdmin
+
 
 
 class UserRegisterView(generics.CreateAPIView):
@@ -183,31 +187,32 @@ class UserAuctionsListView(generics.ListAPIView):
     View to list all auctions of a specific user.
     Accessible only to the user themselves or an administrator.
     """
-
+    
     serializer_class = MyAuctionsSerializer
     permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
 
     def get_queryset(self):
-        user = self.request.user
-        if user.is_staff:
+        request = self.request
+
+        if request.user.is_staff:
             # Admins can view auctions of any user
-            return user.auctions.all()
-
-        # Regular users can only view their own auctions
-        return user.auctions.filter(auctioneer=user)
-
-    def get(self, request, *args, **kwargs):
-        user = self.request.user
-        if user.is_staff:
-            # Admins can view auctions of any user
-            queryset = self.get_queryset()
-
+            user_pk = request.query_params.get("user")
+            
+            if not user_pk:
+                raise NotFound(detail="Missing required query parameter: user")
+            
+            try:
+                target = CustomUser.objects.get(pk=user_pk)
+                
+            except CustomUser.DoesNotExist:
+                raise NotFound(detail=f"No user with id={user_pk}")
+            
         else:
             # Regular users can only view their own auctions
-            queryset = self.get_queryset().filter(auctioneer=user)
+            target = request.user
 
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        # related_name="auctions" on Auction.auctioneer
+        return target.auctions.all()
 
 
 class UserBidsListView(generics.ListAPIView):
@@ -215,28 +220,95 @@ class UserBidsListView(generics.ListAPIView):
     View to list all bids of a specific user.
     Accessible only to the user themselves or an administrator.
     """
-
+    
     serializer_class = MyBidsSerializer
     permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
 
     def get_queryset(self):
-        user = self.request.user
-        if user.is_staff:
+        request = self.request
+
+        if request.user.is_staff:
             # Admins can view bids of any user
-            return user.bids.all()
-
-        # Regular users can only view their own bids
-        return user.bids.filter(bidder=user)
-
-    def get(self, request, *args, **kwargs):
-        user = self.request.user
-        if user.is_staff:
-            # Admins can view bids of any user
-            queryset = self.get_queryset()
-
+            user_pk = request.query_params.get("user")
+            
+            if not user_pk:
+                raise NotFound(detail="Missing required query parameter: user")
+            
+            try:
+                target = CustomUser.objects.get(pk=user_pk)
+                
+            except CustomUser.DoesNotExist:
+                raise NotFound(detail=f"No user with id={user_pk}")
+            
         else:
             # Regular users can only view their own bids
-            queryset = self.get_queryset().filter(bidder=user)
+            target = request.user
 
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        # related_name="bids" on Bid.bidder
+        return target.bids.all()
+
+
+class UserRatingsListView(generics.ListAPIView):
+    """
+    View to list all ratings of a specific user.
+    Accessible only to the user themselves or an administrator.
+    """
+    
+    serializer_class = MyRatingsSerializer
+    permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
+
+    def get_queryset(self):
+        request = self.request
+
+        if request.user.is_staff:
+            # Admins can view ratings of any user
+            user_pk = request.query_params.get("user")
+            
+            if not user_pk:
+                raise NotFound(detail="Missing required query parameter: user")
+            
+            try:
+                target = CustomUser.objects.get(pk=user_pk)
+                
+            except CustomUser.DoesNotExist:
+                raise NotFound(detail=f"No user with id={user_pk}")
+            
+        else:
+            # Regular users can only view their own ratings
+            target = request.user
+
+        # related_name="ratings" on Rating.user
+        return target.ratings.all()
+
+
+class UserCommentsListView(generics.ListAPIView):
+    """
+    View to list all comments of a specific user.
+    Accessible only to the user themselves or an administrator.
+    """
+    
+    serializer_class = MyCommentsSerializer
+    permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
+
+    def get_queryset(self):
+        request = self.request
+
+        if request.user.is_staff:
+            # Admins can view comments of any user
+            user_pk = request.query_params.get("user")
+            
+            if not user_pk:
+                raise NotFound(detail="Missing required query parameter: user")
+            
+            try:
+                target = CustomUser.objects.get(pk=user_pk)
+                
+            except CustomUser.DoesNotExist:
+                raise NotFound(detail=f"No user with id={user_pk}")
+            
+        else:
+            # Regular users can only view their own comments
+            target = request.user
+
+        # related_name="comments" on Comment.user
+        return target.comments.all()

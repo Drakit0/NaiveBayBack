@@ -23,6 +23,8 @@ class AuctionListCreateSerializer(serializers.ModelSerializer):
     )
     closing_date = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%SZ")
     isOpen = serializers.SerializerMethodField(read_only=True)
+    avg_rating = serializers.FloatField(read_only=True)
+
     
     thumbnail = serializers.URLField( # Thumbnail image (url)
         required=False,
@@ -37,7 +39,7 @@ class AuctionListCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Auction
         fields = "__all__"
-        read_only_fields = ("id", "auctioneer", "creation_date")
+        read_only_fields = ("auctioneer", "creation_date", "avg_rating")
 
     @extend_schema_field(serializers.BooleanField())
     def get_isOpen(self, obj):
