@@ -223,7 +223,7 @@ class BidRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
 
         highest_bid = Bid.objects.filter(auction=auction).exclude(id=bid.id).first()
 
-        if highest_bid and price <= highest_bid.price:
+        if highest_bid and price < highest_bid.price:
             raise ValidationError(
                 {"price": f"Must exceed current highest bid ({highest_bid.price})"}
             )
