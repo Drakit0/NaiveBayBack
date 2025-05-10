@@ -297,14 +297,30 @@ class RatingRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
         # fetch the auction (404 if bad ID)
         auction = get_object_or_404(Auction, pk=self.kwargs["auction_id"])
         # get the user’s Rating or create one with rating=1
-        rating_obj, created = Rating.objects.get_or_create(
-            auction=auction,
-            user=self.request.user,
-            defaults={"rating": 0},
-        )
+        # rating_obj, created = Rating.objects.get_or_create(
+        #     auction=auction,
+        #     user=self.request.user,
+        #     defaults={"rating": 0},
+        # )
+        # For GET requests, only retrieve existing ratings (404 if none exist)
+        if self.request.method == "GET":
+            rating_obj = get_object_or_404(
+                Rating,
+                auction=auction,
+                user=self.request.user,
+            )
+        # For PUT/PATCH/DELETE, get or create
+        else:
+            rating_obj, created = Rating.objects.get_or_create(
+                auction=auction,
+                user=self.request.user,
+                defaults={"rating": 1},
+            )
         return rating_obj
 
     def perform_update(self, serializer):
+        # rating = self.get_object()
+
         rating = self.get_object()
         auction = rating.auction
         rating_value = serializer.validated_data.get("rating")
