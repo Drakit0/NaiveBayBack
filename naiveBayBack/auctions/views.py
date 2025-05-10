@@ -275,7 +275,7 @@ class RatingRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
         rating_obj, created = Rating.objects.get_or_create(
             auction=auction,
             user=self.request.user,
-            defaults={'rating': 1},
+            defaults={'rating': 0},
         )
         return rating_obj
     

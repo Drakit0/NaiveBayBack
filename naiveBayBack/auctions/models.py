@@ -76,7 +76,7 @@ class Bid(models.Model):
     
 class Rating(models.Model):
     
-    rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(5)])
     auction = models.ForeignKey(Auction, related_name="ratings", on_delete=models.CASCADE)
     user = models.ForeignKey(CustomUser, related_name="ratings", on_delete=models.CASCADE)
     creation_date = models.DateTimeField(auto_now_add=True)
