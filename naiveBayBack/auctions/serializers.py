@@ -52,7 +52,7 @@ class AuctionListCreateSerializer(serializers.ModelSerializer):
         return obj.image_url
 
     def validate_closing_date(self, value):
-        # TODO: make it so the closing 15 days after creation works
+        # make it so the closing 15 days after creation works
         if value <= timezone.now() + timedelta(days=15):
             raise serializers.ValidationError(
                 "Closing date must be at least 15 days from now"
@@ -199,5 +199,5 @@ class CommentDetailSerializer(serializers.ModelSerializer):
 class CommentListCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = ["id", "title", "content", "creation_date", "edit_date"]
+        fields = ["id", "user", "title", "content", "creation_date", "edit_date"]
         read_only_fields = ["id","creation_date", "edit_date"]
