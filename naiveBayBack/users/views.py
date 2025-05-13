@@ -250,7 +250,7 @@ class UserBidsListView(generics.ListAPIView):
 
 class UserRatingsListView(generics.ListAPIView):
     """
-    View to list all ratings of a specific user.
+    View to list all ratings of a specific user or all users if admin.
     Accessible only to the user themselves or an administrator.
     """
     
@@ -261,17 +261,18 @@ class UserRatingsListView(generics.ListAPIView):
         request = self.request
 
         if request.user.is_staff:
-            # Admins can view ratings of any user
+            # Admins can view ratings of any user or all users
             user_pk = request.query_params.get("user")
             
-            if not user_pk:
-                raise NotFound(detail="Missing required query parameter: user")
-            
-            try:
-                target = CustomUser.objects.get(pk=user_pk)
-                
-            except CustomUser.DoesNotExist:
-                raise NotFound(detail=f"No user with id={user_pk}")
+            if user_pk:
+                try:
+                    target = CustomUser.objects.get(pk=user_pk)
+                    return target.ratings.all()
+                except CustomUser.DoesNotExist:
+                    raise NotFound(detail=f"No user with id={user_pk}")
+            else:
+                # Return all ratings if no specific user is provided
+                return Rating.objects.all()
             
         else:
             # Regular users can only view their own ratings
@@ -283,7 +284,7 @@ class UserRatingsListView(generics.ListAPIView):
 
 class UserCommentsListView(generics.ListAPIView):
     """
-    View to list all comments of a specific user.
+    View to list all comments of a specific user or all users if admin.
     Accessible only to the user themselves or an administrator.
     """
     
@@ -294,17 +295,18 @@ class UserCommentsListView(generics.ListAPIView):
         request = self.request
 
         if request.user.is_staff:
-            # Admins can view comments of any user
+            # Admins can view comments of any user or all users
             user_pk = request.query_params.get("user")
             
-            if not user_pk:
-                raise NotFound(detail="Missing required query parameter: user")
-            
-            try:
-                target = CustomUser.objects.get(pk=user_pk)
-                
-            except CustomUser.DoesNotExist:
-                raise NotFound(detail=f"No user with id={user_pk}")
+            if user_pk:
+                try:
+                    target = CustomUser.objects.get(pk=user_pk)
+                    return target.comments.all()
+                except CustomUser.DoesNotExist:
+                    raise NotFound(detail=f"No user with id={user_pk}")
+            else:
+                # Return all comments if no specific user is provided
+                return Comment.objects.all()
             
         else:
             # Regular users can only view their own comments
