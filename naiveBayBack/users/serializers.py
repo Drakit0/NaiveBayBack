@@ -113,6 +113,7 @@ class MyRatingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rating
         fields = (
+            "user",
             "auction_title",
             "auction_price",
             "auction_category",
@@ -120,6 +121,7 @@ class MyRatingsSerializer(serializers.ModelSerializer):
             "rating",
         )
         read_only_fields = (
+            "user",
             "auction_title",
             "auction_price",
             "auction_category",
@@ -148,6 +150,7 @@ class MyCommentsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = (
+            "user",
             "auction_title",
             "auction_price",
             "auction_category",
@@ -156,6 +159,7 @@ class MyCommentsSerializer(serializers.ModelSerializer):
             "content",
         )
         read_only_fields = (
+            "user",
             "auction_title",
             "auction_price",
             "auction_category",
