@@ -109,6 +109,8 @@ class MyRatingsSerializer(serializers.ModelSerializer):
         read_only=True
     )
     is_open = serializers.SerializerMethodField(read_only=True)
+    
+    user = serializers.CharField(source="user.username", read_only=True)
 
     class Meta:
         model = Rating
@@ -146,6 +148,7 @@ class MyCommentsSerializer(serializers.ModelSerializer):
         read_only=True
     )
     is_open = serializers.SerializerMethodField(read_only=True)
+    user = serializers.CharField(source="user.username", read_only=True)
 
     class Meta:
         model = Comment
