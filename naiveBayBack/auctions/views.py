@@ -351,7 +351,7 @@ class CommentListCreate(generics.ListCreateAPIView):
 
     queryset = Comment.objects.all()
     serializer_class = CommentListCreateSerializer
-    permission_classes = [IsRaterComenterOrAdmin]
+    permission_classes = [IsAuthenticated, IsRaterComenterOrAdmin]
 
     def get_queryset(self):
         return super().get_queryset().filter(auction_id=self.kwargs["auction_id"])
