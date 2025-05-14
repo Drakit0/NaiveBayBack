@@ -358,6 +358,9 @@ class CommentListCreate(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         auction = get_object_or_404(Auction, id=self.kwargs["auction_id"])
+        if auction.closing_date <= timezone.now():
+            raise ValidationError({"detail": "Cannot comment on closed auctions"})
+        
         serializer.save(user=self.request.user, auction=auction)
 
 
