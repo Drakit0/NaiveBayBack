@@ -303,6 +303,10 @@ class RatingRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
         #     defaults={"rating": 0},
         # )
         # For GET requests, only retrieve existing ratings (404 if none exist)
+        
+        if auction.closing_date <= timezone.now():
+            raise ValidationError({"detail": "Cannot rate closed auctions"})
+        
         if self.request.method == "GET":
             rating_obj = get_object_or_404(
                 Rating,
