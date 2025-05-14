@@ -95,7 +95,7 @@ class AuctionListCreate(generics.ListCreateAPIView):
 
         if category:
             # see how I can make it so the category exists in the db
-            queryset = queryset.filter(category__id=category)
+            queryset = queryset.filter(category__name=category)
 
         if min_price and max_price:
             if float(min_price) > float(max_price):
