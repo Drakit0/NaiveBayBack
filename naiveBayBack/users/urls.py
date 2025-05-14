@@ -33,6 +33,5 @@ urlpatterns = [
     path("myComments/", UserCommentsListView.as_view(), name="user-comments"),
     
     path("register/", UserRegisterView.as_view(), name="user-register"),
-
     
 ]
