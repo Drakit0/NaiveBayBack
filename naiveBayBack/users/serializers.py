@@ -16,11 +16,13 @@ class UserSerializer(serializers.ModelSerializer):
             "municipality",
             "locality",
             "password",
+            "first_name",
+            "last_name",
         )
         read_only_fields = ("is_staff", "id")
-        extra_kwargs = {
-            "password": {"write_only": True},
-        }
+        # extra_kwargs = {
+        #     "password": {"write_only": True},
+        # }
 
     def validate_email(self, value):
         user = self.instance  # Solo tiene valor cuando se está actualizando
