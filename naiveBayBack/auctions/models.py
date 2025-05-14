@@ -42,7 +42,7 @@ class Auction(models.Model):
     def avg_rating(self):
         agg = self.ratings.aggregate(avg=models.Avg("rating"))
 
-        return round(agg["avg"] or 3.0, 2)
+        return round(agg["avg"] or 1.0, 2)
 
     @property
     def image_url(self):
