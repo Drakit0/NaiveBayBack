@@ -1,5 +1,5 @@
 # Byte-compiled / optimized / DLL files
-*/__pycache__/
+__pycache__/
 */__pycache__/*
 *.py[cod]
 *$py.class
@@ -177,3 +177,9 @@ cython_debug/
 djangoServer/bin/python
 djangoServer/bin/python3
 djangoServer/bin/python3.12
+# local
+.env
+!.env.example
+db.sqlite3
+media/
+djangoServer/
